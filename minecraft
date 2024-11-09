@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft-Inspired Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #87CEEB;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #gameCanvas {
+            display: block;
+            background-color: #87CEEB;
+        }
+
+        .controls {
+            position: fixed;
+            top: 10px;
+            z-index: 10;
+        }
+
+        .controls button {
+            margin: 5px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="openCraftingTable()">Crafting Table</button>
+        <button onclick="toggleNether()">Nether Portal</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game settings
+        const blockSize = 40;
+        let blocksWide, blocksHigh;
+        let inNether = false;
+
+        // Function to resize the canvas and recalculate blocksWide and blocksHigh
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            blocksWide = Math.floor(canvas.width / blockSize);
+            blocksHigh = Math.floor(canvas.height / blockSize);
+            drawWorld();
+        }
+
+        // Generate Overworld terrain
+        function generateOverworld() {
+            const world = [];
+            for (let x = 0; x < blocksWide; x++) {
+                world[x] = [];
+                let height = Math.floor(Math.random() * (blocksHigh / 2)) + blocksHigh / 2;
+                for (let y = 0; y < blocksHigh; y++) {
+                    if (y >= height) {
+                        world[x][y] = '#8B4513'; // Dirt
+                    } else {
+                        world[x][y] = '#87CEEB'; // Sky
+                    }
+                }
+            }
+            return world;
+        }
+
+        // Generate Nether terrain
+        function generateNether() {
+            const world = [];
+            for (let x = 0; x < blocksWide; x++) {
+                world[x] = [];
+                let height = Math.floor(Math.random() * (blocksHigh / 2)) + blocksHigh / 2;
+                for (let y = 0; y < blocksHigh; y++) {
+                    if (y >= height) {
+                        world[x][y] = '#FF4500'; // Netherrack (orange)
+                    } else {
+                        world[x][y] = '#000000'; // Nether sky (black)
+                    }
+                }
+            }
+            return world;
+        }
+
+        // Toggle between Overworld and Nether
+        function toggleNether() {
+            inNether = !inNether;
+            drawWorld();
+        }
+
+        // Draw the world based on the current dimension
+        function drawWorld() {
+            const world = inNether ? generateNether() : generateOverworld();
+            for (let x = 0; x < blocksWide; x++) {
+                for (let y = 0; y < blocksHigh; y++) {
+                    drawBlock(x, y, world[x][y]);
+                }
+            }
+            drawPlayer();
+            if (inNether) drawEnderDragon();
+        }
+
+        // Function to draw a block at a given position
+        function drawBlock(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
+            ctx.strokeRect(x * blockSize, y * blockSize, blockSize, blockSize);
+        }
+
+        // Simple player character
+        const player = {
+            x: Math.floor(blocksWide / 2),
+            y: blocksHigh - 2, // Start at the second row from the bottom
+            width: blockSize,
+            height: blockSize,
+            color: '#FF0000' // Bright red color
+        };
+
+        function drawPlayer() {
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x * blockSize, player.y * blockSize, player.width, player.height);
+        }
+
+        // Placeholder function for crafting table
+        function openCraftingTable() {
+            alert("Crafting Table opened. (Functionality not implemented)");
+        }
+
+        // Simple Ender Dragon
+        const enderDragon = {
+            x: Math.floor(blocksWide / 2),
+            y: 2,
+            width: blockSize * 2,
+            height: blockSize,
+            color: 'black'
+        };
+
+        function drawEnderDragon() {
+            ctx.fillStyle = enderDragon.color;
+            ctx.fillRect(enderDragon.x * blockSize, enderDragon.y * blockSize, enderDragon.width, enderDragon.height);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText("Ender Dragon", (enderDragon.x * blockSize) + 10, (enderDragon.y * blockSize) - 5);
+        }
+
+        // Handle movement with arrow keys and WASD keys
+        document.addEventListener('keydown', (event) => {
+            ctx.clearRect(player.x * blockSize, player.y * blockSize, player.width, player.height);
+            
+            // Arrow keys and WASD movement
+            if (event.key === 'ArrowRight' || event.key === 'd') player.x += 1;
+            if (event.key === 'ArrowLeft' || event.key === 'a') player.x -= 1;
+            if (event.key === 'ArrowUp' || event.key === 'w') player.y -= 1;
+            if (event.key === 'ArrowDown' || event.key === 's') player.y += 1;
+
+            // Boundary checks to keep player within canvas
+            player.x = Math.max(0, Math.min(player.x, blocksWide - 1));
+            player.y = Math.max(0, Math.min(player.y, blocksHigh - 1));
+
+            drawPlayer();
+        });
+
+        // Listen for window resize to update canvas dimensions
+        window.addEventListener('resize', resizeCanvas);
+
+        // Initialize game
+        resizeCanvas();
+    </script>
+</body>
+</html>
